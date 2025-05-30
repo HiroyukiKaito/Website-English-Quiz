@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <title>BahasaQuiz - Duolingo Style</title>
+</head>
+<body>
+  <nav>
+  <h1>English Converstation Quiz</h1>
+  <div>
+    <button onclick="toggleVerbList('regular')">Regular Verbs</button>
+    <button onclick="toggleVerbList('irregular')">Irregular Verbs</button>
+    <button class="start-btn" onclick="alert('Name: Muhamad Adidtia'+ '\nEmail: kittokaito12@gmail.com'+ '\nNo Hp: +62 891-1293-2987')">Contact Person</button>
+  </div>
+</nav>
+
+<div id="regular-verbs" style="display: none; padding: 1rem 2rem;">
+  <h3>Regular Verbs</h3>
+  <ul>
+    <li>play – played – played</li>
+    <li>walk – walked – walked</li>
+    <li>clean – cleaned – cleaned</li>
+    <li>cook – cooked – cooked</li>
+    <!-- Tambahkan sesuai kebutuhan -->
+  </ul>
+</div>
+
+<div id="irregular-verbs" style="display: none; padding: 1rem 2rem;">
+  <h3>Irregular Verbs</h3>
+  <ul>
+    <li>go – went – gone</li>
+    <li>eat – ate – eaten</li>
+    <li>see – saw – seen</li>
+    <li>write – wrote – written</li>
+    <!-- Tambahkan sesuai kebutuhan -->
+  </ul>
+</div>
+
+
+
+  <header class="hero">
+    <h2>Learning Indonesia to English Converstation Made Easy</h2>
+    <p>Daily vocabulary practice, in English.</p>
+    <label for="difficulty">Select Difficulty Level:</label>
+    <select id="difficulty">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select><br>
+    <button id="hero-start-btn">Play Quiz</button>
+  </header>
+
+  <main id="quiz-section" style="display: none;">
+    <div class="progress">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div id="timer"></div>
+    <section id="quiz-container"></section>
+  </main>
+
+  <div id="score-section" style="display: none;">
+    <h2 id="score-text"></h2>
+    <button id="restart-btn">Restart</button>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Kaito Cihuyyy. Dibuat dengan ❤️</p>
+  </footer>
+
+<script>
+  function toggleVerbList(type) {
+  const regularDiv = document.getElementById('regular-verbs');
+  const irregularDiv = document.getElementById('irregular-verbs');
+
+  if (type === 'regular') {
+    regularDiv.style.display = regularDiv.style.display === 'none' ? 'block' : 'none';
+    irregularDiv.style.display = 'none';
+  } else {
+    irregularDiv.style.display = irregularDiv.style.display === 'none' ? 'block' : 'none';
+    regularDiv.style.display = 'none';
+  }
+}
+
+  // Variabel global
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let questions = [];
+  let timer;
+  const timePerQuestion = 15;
+  let timeLeft = timePerQuestion;
+
+  // Ambil elemen-elemen DOM
+  const startBtn = document.getElementById('hero-start-btn');
+  const restartBtn = document.getElementById('restart-btn');
+
+  // Event listener untuk tombol mulai dan restart
+  startBtn.addEventListener('click', () => {
+    const difficulty = document.getElementById('difficulty').value;
+    startQuiz(difficulty);
+  });
+
+  restartBtn.addEventListener('click', () => {
+    resetQuiz();
+  });
+
+  // Mulai kuis dengan tingkat kesulitan yang dipilih
+  function startQuiz(difficulty) {
+    document.getElementById('quiz-section').style.display = 'block';
+    document.getElementById('score-section').style.display = 'none';
+    questions = getQuestionsByDifficulty(difficulty);
+    currentQuestionIndex = 0;
+    score = 0;
+    loadQuestion();
+  }
+
+  // Menampilkan satu pertanyaan dengan timer
+  function loadQuestion() {
+    clearInterval(timer);
+    timeLeft = timePerQuestion;
+    updateTimerDisplay();
+
+    const quizContainer = document.getElementById('quiz-container');
+    quizContainer.innerHTML = '';
+
+    if (currentQuestionIndex >= questions.length) {
+      showScore();
+      return;
+    }
+
+    // Jika ada progress bar, perbarui lebar progressnya
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+      progressBar.style.width = `${(currentQuestionIndex / questions.length) * 100}%`;
+    }
+
+    const currentQ = questions[currentQuestionIndex];
+    const questionElement = document.createElement('div');
+    questionElement.classList.add('question-block');
+    questionElement.innerHTML = `
+      <div class="question-header">Soal ${currentQuestionIndex + 1} dari ${questions.length}</div>
+      <div id="timer">Sisa waktu: ${timeLeft} detik</div>
+      <h3>${currentQ.question}</h3>
+      <div class="choices">
+        ${currentQ.choices
+          .map(
+            choice =>
+              `<button class="choice-btn" onclick="checkAnswer(this, '${currentQ.answer}')">${choice}</button>`
+          )
+          .join('')}
+      </div>
+    `;
+    quizContainer.appendChild(questionElement);
+
+    // Mulai timer hitung mundur
+    timer = setInterval(() => {
+      timeLeft--;
+      updateTimerDisplay();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        autoSkip();
+      }
+    }, 1000);
+  }
+
+  // Perbarui tampilan timer
+  function updateTimerDisplay() {
+    const timerDiv = document.getElementById('timer');
+    if (timerDiv) {
+      timerDiv.innerText = `Sisa waktu: ${timeLeft} detik`;
+    }
+  }
+
+  // Mengecek jawaban yang dipilih pengguna
+  function checkAnswer(button, correctAnswer) {
+    clearInterval(timer);
+    const buttons = button.parentElement.querySelectorAll('.choice-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
+    if (button.innerText === correctAnswer) {
+      button.style.backgroundColor = '#4CAF50';
+      score++;
+    } else {
+      button.style.backgroundColor = '#f44336';
+      buttons.forEach(btn => {
+        if (btn.innerText === correctAnswer) {
+          btn.style.backgroundColor = '#4CAF50';
+        }
+      });
+    }
+
+    setTimeout(() => {
+      currentQuestionIndex++;
+      loadQuestion();
+    }, 1000);
+  }
+
+  // Jika waktu habis, tunjukkan jawaban yang benar dan otomatis lanjut ke soal berikutnya
+  function autoSkip() {
+    const buttons = document.querySelectorAll('.choice-btn');
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      if (btn.innerText === questions[currentQuestionIndex].answer) {
+        btn.style.backgroundColor = '#4CAF50';
+      }
+    });
+
+    setTimeout(() => {
+      currentQuestionIndex++;
+      loadQuestion();
+    }, 1000);
+  }
+
+  // Tampilkan skor akhir
+  function showScore() {
+    clearInterval(timer);
+    document.getElementById('quiz-container').innerHTML = '';
+    document.getElementById('score-section').style.display = 'block';
+    document.getElementById('score-text').innerText = `Skor Kamu: ${score} dari ${questions.length}`;
+  }
+
+  // Reset tampilan kuis
+  function resetQuiz() {
+    document.getElementById('quiz-section').style.display = 'none';
+    document.getElementById('score-section').style.display = 'none';
+  }
+
+  // Fungsi untuk mendapatkan pertanyaan berdasarkan tingkat kesulitan
+  function getQuestionsByDifficulty(difficulty) {
+    const easy = [
+      { question: 'Apa bahasa Inggris dari "apel"?', choices: ['apple', 'banana', 'grape'], answer: 'apple' },
+      { question: 'Apa bahasa Inggris dari "anjing"?', choices: ['dog', 'cat', 'bird'], answer: 'dog' },
+      { question: 'Apa bahasa Inggris dari "matahari"?', choices: ['sun', 'moon', 'star'], answer: 'sun' },
+      { question: 'Apa bahasa Inggris dari "rumah"?', choices: ['house', 'car', 'tree'], answer: 'house' },
+      { question: 'Apa bahasa Inggris dari "air"?', choices: ['water', 'milk', 'juice'], answer: 'water' },
+      { question: 'Apa bahasa Inggris dari "buku"?', choices: ['book', 'pen', 'paper'], answer: 'book' },
+      { question: 'Apa bahasa Inggris dari "meja"?', choices: ['table', 'chair', 'lamp'], answer: 'table' },
+      { question: 'Apa bahasa Inggris dari "pisang"?', choices: ['banana', 'grape', 'apple'], answer: 'banana' },
+      { question: 'Apa bahasa Inggris dari "kucing"?', choices: ['cat', 'dog', 'fish'], answer: 'cat' },
+      { question: 'Apa bahasa Inggris dari "sekolah"?', choices: ['school', 'office', 'market'], answer: 'school' },
+      { question: 'Apa bahasa Inggris dari "mobil"?', choices: ['car', 'bus', 'bike'], answer: 'car' },
+      { question: 'Apa bahasa Inggris dari "roti"?', choices: ['bread', 'rice', 'noodle'], answer: 'bread' },
+      { question: 'Apa bahasa Inggris dari "susu"?', choices: ['milk', 'juice', 'tea'], answer: 'milk' },
+      { question: 'Apa bahasa Inggris dari "pena"?', choices: ['pen', 'pencil', 'eraser'], answer: 'pen' },
+      { question: 'Apa bahasa Inggris dari "kursi"?', choices: ['chair', 'table', 'door'], answer: 'chair' },
+      { question: 'Apa bahasa Inggris dari "mata"?', choices: ['eye', 'ear', 'nose'], answer: 'eye' },
+      { question: 'Apa bahasa Inggris dari "telinga"?', choices: ['ear', 'nose', 'mouth'], answer: 'ear' },
+      { question: 'Apa bahasa Inggris dari "warna merah"?', choices: ['red', 'blue', 'green'], answer: 'red' },
+      { question: 'Apa bahasa Inggris dari "ikan"?', choices: ['fish', 'frog', 'dog'], answer: 'fish' },
+      { question: 'Apa bahasa Inggris dari "kaki"?', choices: ['foot', 'hand', 'head'], answer: 'foot' },
+      { question: 'Apa bahasa Inggris dari "jendela"?', choices: ['window', 'door', 'wall'], answer: 'window' },
+      { question: 'Apa bahasa Inggris dari "pintu"?', choices: ['door', 'roof', 'floor'], answer: 'door' },
+      { question: 'Apa bahasa Inggris dari "jam"?', choices: ['clock', 'watch', 'time'], answer: 'clock' },
+      { question: 'Apa bahasa Inggris dari "langit"?', choices: ['sky', 'cloud', 'wind'], answer: 'sky' },
+      { question: 'Apa bahasa Inggris dari "bola"?', choices: ['ball', 'bat', 'net'], answer: 'ball' }
+    ];
+
+    const medium = [
+      { question: 'Apa bentuk lampau dari "go"?', choices: ['went', 'gone', 'going'], answer: 'went' },
+      { question: 'Kalimat “He is running” dalam Bahasa Indonesia adalah…', choices: ['Dia sedang berlari', 'Dia akan berlari', 'Dia telah berlari'], answer: 'Dia sedang berlari' },
+      { question: 'Manakah yang merupakan kata sifat (adjective)?', choices: ['beautiful', 'quickly', 'run'], answer: 'beautiful' },
+      { question: 'Sinonim dari "happy" adalah…', choices: ['joyful', 'angry', 'sad'], answer: 'joyful' },
+      { question: 'Kalimat pasif dari "She eats an apple" adalah…', choices: ['An apple is eaten by her', 'She is eating an apple', 'She is eaten an apple'], answer: 'An apple is eaten by her' },
+      { question: 'Apa antonim dari "cold"?', choices: ['hot', 'wet', 'windy'], answer: 'hot' },
+      { question: 'Manakah kalimat yang benar?', choices: ['He go to school.', 'He goes to school.', 'He going to school.'], answer: 'He goes to school.' },
+      { question: 'Arti dari “library” adalah…', choices: ['perpustakaan', 'laboratorium', 'kebun'], answer: 'perpustakaan' },
+      { question: 'Which one is a noun?', choices: ['city', 'fast', 'run'], answer: 'city' },
+      { question: '“They were playing” artinya…', choices: ['Mereka sedang bermain', 'Mereka telah bermain', 'Mereka akan bermain'], answer: 'Mereka sedang bermain' },
+      { question: 'Arti dari "teacher" adalah…', choices: ['guru', 'murid', 'penjaga'], answer: 'guru' },
+      { question: 'Arti "always" adalah…', choices: ['selalu', 'kadang-kadang', 'tidak pernah'], answer: 'selalu' },
+      { question: 'Sinonim "fast" adalah…', choices: ['quick', 'slow', 'lazy'], answer: 'quick' },
+      { question: 'Bentuk past tense dari "eat" adalah…', choices: ['ate', 'eated', 'eats'], answer: 'ate' },
+      { question: '“I have eaten” adalah bentuk…', choices: ['present perfect', 'past simple', 'future'], answer: 'present perfect' },
+      { question: 'Arti “early” adalah…', choices: ['awal', 'akhir', 'malam'], answer: 'awal' },
+      { question: '“It is raining” artinya…', choices: ['Hujan sedang turun', 'Akan hujan', 'Telah hujan'], answer: 'Hujan sedang turun' },
+      { question: 'Bentuk plural dari “child” adalah…', choices: ['children', 'childs', 'childes'], answer: 'children' },
+      { question: 'Apa arti “listen”?', choices: ['mendengarkan', 'berbicara', 'melihat'], answer: 'mendengarkan' },
+      { question: 'Kalimat tanya dari "You are happy" adalah…', choices: ['Are you happy?', 'Do you happy?', 'Happy you are?'], answer: 'Are you happy?' },
+      { question: 'What is the opposite of “short”?', choices: ['tall', 'thin', 'small'], answer: 'tall' },
+      { question: 'Arti “write” adalah…', choices: ['menulis', 'membaca', 'menggambar'], answer: 'menulis' },
+      { question: 'Kalimat “I will go tomorrow” artinya…', choices: ['Saya akan pergi besok', 'Saya telah pergi besok', 'Saya sedang pergi besok'], answer: 'Saya akan pergi besok' },
+      { question: 'Sinonim dari “smart”?', choices: ['clever', 'slow', 'dumb'], answer: 'clever' },
+      { question: 'Arti “behind the house”?', choices: ['di belakang rumah', 'di depan rumah', 'di dalam rumah'], answer: 'di belakang rumah' }
+    ];
+
+    const hard = [
+      { question: 'Kalimat “Had I known, I would have helped” termasuk tipe…', choices: ['conditional 3', 'conditional 2', 'passive'], answer: 'conditional 3' },
+      { question: 'Sinonim “meticulous” adalah…', choices: ['careful', 'messy', 'hasty'], answer: 'careful' },
+      { question: 'Arti idiom “break the ice”?', choices: ['mencairkan suasana', 'memecahkan es', 'menghindar'], answer: 'mencairkan suasana' },
+      { question: 'Kalimat “He had been working” disebut…', choices: ['past perfect continuous', 'present perfect', 'past simple'], answer: 'past perfect continuous' },
+      { question: 'Apa makna “albeit”?', choices: ['meskipun', 'sehingga', 'karena'], answer: 'meskipun' },
+      { question: 'Passive dari “They will finish the project” adalah…', choices: ['The project will be finished by them', 'They finished the project', 'They were finishing'], answer: 'The project will be finished by them' },
+      { question: 'Sinonim dari “reluctant”?', choices: ['unwilling', 'excited', 'ready'], answer: 'unwilling' },
+      { question: '“He talks as if he knew everything” menggunakan…', choices: ['subjunctive', 'indicative', 'imperative'], answer: 'subjunctive' },
+      { question: '“She is used to working late” artinya…', choices: ['Terbiasa bekerja larut', 'Dulu bekerja larut', 'Baru bekerja larut'], answer: 'Terbiasa bekerja larut' },
+      { question: 'Apa bentuk noun dari “decide”?', choices: ['decision', 'deciding', 'decided'], answer: 'decision' },
+      { question: 'Sinonim “benevolent”?', choices: ['kind', 'mean', 'harsh'], answer: 'kind' },
+      { question: 'Kalimat indirect dari: “She said: I am tired”', choices: ['She said that she was tired', 'She said she is tired', 'She said that I am tired'], answer: 'She said that she was tired' },
+      { question: 'Makna idiom “once in a blue moon”?', choices: ['sangat jarang', 'sangat sering', 'sangat cepat'], answer: 'sangat jarang' },
+      { question: 'Manakah kalimat conditional type 2?', choices: ['If I were you, I would study', 'If I study, I pass', 'If I had studied, I would have passed'], answer: 'If I were you, I would study' },
+      { question: 'Arti frasa “to no avail”?', choices: ['sia-sia', 'berhasil', 'cepat'], answer: 'sia-sia' },
+      { question: 'Arti “redundant”?', choices: ['berlebihan', 'penting', 'perlu'], answer: 'berlebihan' },
+      { question: 'Sinonim “pinnacle”?', choices: ['peak', 'valley', 'bottom'], answer: 'peak' },
+      { question: 'Arti frasa “cutting-edge”?', choices: ['terbaru', 'berbahaya', 'tumpul'], answer: 'terbaru' },
+      { question: 'Kalimat “I wish I knew the answer” menunjukkan…', choices: ['harapan yang tidak nyata', 'fakta', 'masa depan'], answer: 'harapan yang tidak nyata' },
+      { question: 'Makna “cautiously optimistic”?', choices: ['berharap dengan hati-hati', 'pesimis', 'tidak yakin'], answer: 'berharap dengan hati-hati' },
+      { question: 'Sinonim dari “lucid”?', choices: ['clear', 'dark', 'vague'], answer: 'clear' },
+      { question: 'Kalimat “The more you study, the more you learn” adalah…', choices: ['parallel comparison', 'passive voice', 'relative clause'], answer: 'parallel comparison' },
+      { question: 'Sinonim dari “vivid”?', choices: ['lively', 'boring', 'dim'], answer: 'lively' },
+      { question: 'Makna frasa “go the extra mile”?', choices: ['berusaha lebih keras', 'menyerah', 'berhenti'], answer: 'berusaha lebih keras' },
+      { question: 'Bentuk adjective dari “courage”?', choices: ['courageous', 'courageful', 'couragely'], answer: 'courageous' }
+    ];
+
+    if (difficulty === 'easy') return easy;
+    else if (difficulty === 'medium') return medium;
+    else return hard;
+  }
+</script>
+
+</body>
+</html>
